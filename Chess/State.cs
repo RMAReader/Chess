@@ -105,6 +105,14 @@ namespace Chess
         }
 
 
+        public void MovePieceUnchecked(Move move)
+        {
+            if (Board[move.fromRank, move.fromFile].Player == EnumPlayer.Undefined)
+                throw new ArgumentException($"There isn't a piece at [{ move.fromRank},{ move.toRank}]");
+
+            Board[move.toRank, move.toFile] = Board[move.fromRank, move.fromFile];
+            Board[move.fromRank, move.fromFile].Player = EnumPlayer.Undefined;
+        }
         public void MovePieceUnchecked(int fromRank, int fromFile, int toRank, int toFile)
         {
             if (Board[fromRank, fromFile].Player == EnumPlayer.Undefined)
@@ -113,7 +121,6 @@ namespace Chess
             Board[toRank, toFile] = Board[fromRank, fromFile];
             Board[fromRank, fromFile].Player = EnumPlayer.Undefined;
         }
-
 
         public List<Position> GetRookMoveOptions(Position current, EnumPlayer player)
         {
@@ -386,6 +393,10 @@ namespace Chess
         {
             Player = player;
             Piece = type;
+        }
+        public override string ToString()
+        {
+            return $"{Player}:{Piece}";
         }
     }
     public struct Position

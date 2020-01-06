@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 
 namespace Chess.Test
 {
@@ -46,6 +47,52 @@ namespace Chess.Test
 
             var t3 = sw.Elapsed.TotalMilliseconds;
             sw.Restart();
+        }
+
+        [TestMethod]
+        public void BoardComparisonSpeed()
+        {
+            var board1 = new byte[64];
+            var board2 = new byte[64];
+            board1[0] = 1;
+            board2[0] = 2;
+            
+            int itr = 1000000;
+            var timings = new List<long>();
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            int count1 = 0;
+            for (int i=0; i < itr; i++)
+            {
+                count1 = i;
+            }
+            timings.Add(sw.ElapsedMilliseconds);
+            sw.Restart();
+
+            int count2 = 0;
+            for (int i = 0; i < itr; i++)
+            {
+                count2 = i;
+                var s1 = new System.ReadOnlySpan<byte>(board1);
+                var s2 = new System.ReadOnlySpan<byte>(board2);
+                var isEqual = s1.SequenceEqual(s2);
+            }
+            timings.Add(sw.ElapsedMilliseconds);
+            sw.Restart();
+
+            int count3 = 0;
+            for (int i = 0; i < itr; i++)
+            {
+                count3 = i;
+                
+                var isEqual = true;
+                for(int j=0)
+            }
+            timings.Add(sw.ElapsedMilliseconds);
+            sw.Restart();
+
+
         }
     }
 }
