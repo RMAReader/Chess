@@ -36,6 +36,7 @@ namespace Chess
             if (UnprocessedChildren == null)
             {
                 UnprocessedChildren = new Stack<Node>();
+
                 foreach (var move in CurrentState.IterateMoves(player))
                 {
                     var nextState = new State(CurrentState);
@@ -43,104 +44,82 @@ namespace Chess
                     UnprocessedChildren.Push(new Node(nextState, move, this));
                 }
 
-                //UnprocessedChildren = new Stack<Node>();
-                //for (int i = 0; i < 30; i++)
-                //    UnprocessedChildren.Push(new Node(++counter, this));
+                //var children = new List<Node>();
+                //foreach (var move in CurrentState.IterateMoves(player))
+                //{
+                //    var nextState = new State(CurrentState);
+                //    nextState.MovePieceUnchecked(move);
+                //    var newNode = new Node(nextState, move, this);
+                //    newNode.Value = newNode.CalculateHeuristicValue();
+                //    children.Add(newNode);
+                //}
+                //ChildrenCount = children.Count;
 
-                ChildrenCount = UnprocessedChildren.Count;
+                //if(player == EnumPlayer.White)
+                //{
+                //    foreach (var node in children.OrderBy(x => x.Value))
+                //        UnprocessedChildren.Push(node);
+                //}
+                //else
+                //{
+                //    foreach (var node in children.OrderByDescending(x => x.Value))
+                //        UnprocessedChildren.Push(node);
+                //}
             }
         }
         public double CalculateHeuristicValue()
         {
-            return rnd.NextDouble();
+            if(double.IsNaN(Value))
+                Value = StateEvaluator.GetStateValue(CurrentState);
+
+            return Value;
         }
 
-        //public override string ToString()
-        //{
-        //    var sb = new StringBuilder();
-        //    sb.AppendFormat("{0}-{1}", Value, Data);
-        //    if(UnprocessedChildren != null)
-        //    {
-        //        sb.AppendFormat("|", Data);
-        //        foreach (var c in UnprocessedChildren)
-        //        {
-        //            sb.AppendFormat("{0},", c.Data);
-        //        }
-        //    }
-        //    return sb.ToString();
-        //}
+        public string PathToString()
+        {
+            var sb = new StringBuilder();
+            var steps = new List<String>();
+            var node = this;
 
-        //public string PathToString()
-        //{
-        //    var sb = new StringBuilder();
+            while(node != null)
+            {
+                steps.Add(node.CurrentState.ToString());
+                steps.Add($"heuristic = {node.CalculateHeuristicValue():0.0}");
+                node = node.Parent;
+            }
+            steps.Reverse();
 
-        //    var curr = this;
-        //    while(curr != null)
-        //    {
-        //        if (sb.Length == 0)
-        //        {
-        //            sb.AppendFormat("{0}", curr.Data);
-        //        }
-        //        else
-        //        {
-        //            sb.AppendFormat("|{0}", curr.Data);
-        //        }
-        //        curr = curr.Parent;
-        //    }
-        //    return sb.ToString();
-        //}
+            foreach (var step in steps)
+                sb.AppendLine(step);
+
+            return sb.ToString();
+        }
     }
 
 
 
     public class GameTree
     {
-        //public IEnumerable<Node> IteratePaths(Node root, int depth)
-        //{
-        //    var path = new Stack<Node>();
-        //    path.Push(root);
-
-        //    while (path.Count > 0)
-        //    {
-        //        var curr = path.Peek();
-
-        //        if(curr.UnprocessedChildren == null)
-        //        {
-        //            //need to look deeper...
-        //            if (path.Count < depth)
-        //            {
-        //                curr.CreateChildren();
-        //                path.Push(curr.UnprocessedChildren.Pop());
-        //            }
-        //            //return top of stack item
-        //            else
-        //            {
-        //                var result = path.Pop();
-        //                yield return result;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            //put next child to top path
-        //            if (curr.UnprocessedChildren.Count > 0)
-        //            {
-        //                path.Push(curr.UnprocessedChildren.Pop());
-        //            }
-        //            else
-        //            {
-        //                path.Pop();
-        //            }
-        //        }
-        //    }
-        //}
-
-    
-        public double AlphaBetaRecursive(Node node, int depth, bool isMaximizingPlayer)
+       
+        public Node AlphaBetaRecursive(Node node, int depth, bool isMaximizingPlayer)
         {
             double alpha = double.NegativeInfinity;
             double beta = double.PositiveInfinity;
 
-            return AlphaBetaRecursive(node, depth, alpha, beta, isMaximizingPlayer);
+            node.CreateChildren(isMaximizingPlayer ? EnumPlayer.White : EnumPlayer.Black);
+
+            var options = new List<Node>();
+            while(node.UnprocessedChildren.Count > 0)
+            {
+                var currentOption = node.UnprocessedChildren.Pop();
+                currentOption.Value = AlphaBetaRecursive(currentOption, depth, alpha, beta, !isMaximizingPlayer);
+                options.Add(currentOption);
+            }
+
+            if(isMaximizingPlayer)
+                return options.OrderByDescending(x => x.Value).First();
+            else
+                return options.OrderBy(x => x.Value).First();
         }
 
         private double AlphaBetaRecursive(Node node, int depth, double alpha, double beta, bool isMaximizingPlayer)

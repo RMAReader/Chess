@@ -13,7 +13,7 @@ namespace Chess
 
     public static class StateFactory
     {
-        public static State GetStartingState()
+        public static State GetDefaultStartingState()
         {
             var result = new State();
             result.InitialiseBoard(8, 8);
@@ -44,6 +44,22 @@ namespace Chess
 
             return result;
         }
+
+        public static State GetPawnStartingState(int ranks, int files)
+        {
+            var result = new State();
+            result.InitialiseBoard(ranks, files);
+
+            for (int i = 0; i < result.Files; i++)
+                result.AddPiece(new BoardPiece(EnumPlayer.White, EnumPiece.Pawn), 0, i);
+
+            for (int i = 0; i < result.Files; i++)
+                result.AddPiece(new BoardPiece(EnumPlayer.Black, EnumPiece.Pawn), result.Ranks - 1, i);
+
+            return result;
+        }
+
+      
     }
 
 
@@ -105,13 +121,21 @@ namespace Chess
         }
 
 
-        public void MovePieceUnchecked(Move move)
+        public bool MovePieceUnchecked(Move move)
         {
             if (Board[move.fromRank, move.fromFile].Player == EnumPlayer.Undefined)
                 throw new ArgumentException($"There isn't a piece at [{ move.fromRank},{ move.toRank}]");
 
+            bool pieceCaptured = false;
+            if(Board[move.toRank, move.toFile].Player != EnumPlayer.Undefined)
+            {
+                pieceCaptured = true;
+            }
+
             Board[move.toRank, move.toFile] = Board[move.fromRank, move.fromFile];
-            Board[move.fromRank, move.fromFile].Player = EnumPlayer.Undefined;
+            Board[move.fromRank, move.fromFile] = new BoardPiece(EnumPlayer.Undefined,EnumPiece.King);
+
+            return pieceCaptured;
         }
         public void MovePieceUnchecked(int fromRank, int fromFile, int toRank, int toFile)
         {
@@ -274,25 +298,25 @@ namespace Chess
                     if (Board[rank, current.file].Player == EnumPlayer.Undefined)
                     {
                         result.Add(new Position { rank = rank, file = current.file });
+
+                        var nextRank = rank + 1;
+                        if (nextRank < Ranks && Board[nextRank, current.file].Player == EnumPlayer.Undefined)
+                        {
+                            result.Add(new Position { rank = nextRank, file = current.file });
+                        }
                     }
 
                     var file = current.file - 1;
-                    if (file >= 0 && Board[rank, current.file].Player != player && Board[rank, current.file].Player != EnumPlayer.Undefined)
+                    if (file >= 0 && Board[rank, file].Player != player && Board[rank, file].Player != EnumPlayer.Undefined)
                     {
                         result.Add(new Position { rank = rank, file = file });
                     }
 
                     file = current.file + 1;
-                    if (file < Files && Board[rank, current.file].Player != player && Board[rank, current.file].Player != EnumPlayer.Undefined)
+                    if (file < Files && Board[rank, file].Player != player && Board[rank, file].Player != EnumPlayer.Undefined)
                     {
                         result.Add(new Position { rank = rank, file = file });
                     }
-                }
-
-                rank += 1;
-                if (rank < Ranks && Board[rank, current.file].Player == EnumPlayer.Undefined)
-                { 
-                    result.Add(new Position { rank = rank, file = current.file });
                 }
             }
             else
@@ -303,25 +327,26 @@ namespace Chess
                     if (Board[rank, current.file].Player == EnumPlayer.Undefined)
                     {
                         result.Add(new Position { rank = rank, file = current.file });
+
+                        var nextrank = rank - 1;
+                        if (nextrank >= 0 && Board[nextrank, current.file].Player == EnumPlayer.Undefined)
+                        {
+                            result.Add(new Position { rank = nextrank, file = current.file });
+                        }
+
                     }
 
                     var file = current.file - 1;
-                    if (file >= 0 && Board[rank, current.file].Player != player && Board[rank, current.file].Player != EnumPlayer.Undefined)
+                    if (file >= 0 && Board[rank, file].Player != player && Board[rank, file].Player != EnumPlayer.Undefined)
                     {
                         result.Add(new Position { rank = rank, file = file });
                     }
 
                     file = current.file + 1;
-                    if (file < Files && Board[rank, current.file].Player != player && Board[rank, current.file].Player != EnumPlayer.Undefined)
+                    if (file < Files && Board[rank, file].Player != player && Board[rank, file].Player != EnumPlayer.Undefined)
                     {
                         result.Add(new Position { rank = rank, file = file });
                     }
-                }
-
-                rank -= 1;
-                if (rank >= 0 && Board[rank, current.file].Player == EnumPlayer.Undefined)
-                {
-                    result.Add(new Position { rank = rank, file = current.file });
                 }
             }
             return result;
@@ -371,6 +396,24 @@ namespace Chess
                 }
             }
         }
+
+
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+
+            for (int i = Ranks-1; i >=0; i--)
+            {
+                for (int j = 0; j < Files; j++)
+                {
+                    sb.AppendFormat("{0}|", Board[i, j].ToStringShort());
+                }
+                sb.AppendFormat("{0}", Environment.NewLine);
+            }
+            return sb.ToString();
+        }
+
         
     }
 
@@ -396,7 +439,19 @@ namespace Chess
         }
         public override string ToString()
         {
+            if (Player == EnumPlayer.Undefined)
+                return "Empty";
+
             return $"{Player}:{Piece}";
+        }
+
+        public string ToStringShort()
+        {
+            if (Player == EnumPlayer.White && Piece == EnumPiece.Pawn)
+                return "wp";
+            if (Player == EnumPlayer.Black && Piece == EnumPiece.Pawn)
+                return "bp";
+            return "  ";
         }
     }
     public struct Position
@@ -419,6 +474,42 @@ namespace Chess
         public int fromFile;
         public int toRank;
         public int toFile;
+
+
+
+        public override string ToString()
+        {
+            return $"{Interpreter.FileName(fromFile)}," +
+                $"{Interpreter.RankName(fromRank)}," +
+                $"{Interpreter.FileName(toFile)}," +
+                $"{Interpreter.RankName(toRank)}";
+        }
+
+        public static bool TryParse(string s, out Move move)
+        {
+            move = new Move();
+
+            s = s.Trim();
+            if (s.Length == 4
+                && Interpreter.TryParseColumn(s[0], out int fromFile)
+                && Interpreter.TryParseRow(s[1], out int fromRank)
+                && Interpreter.TryParseColumn(s[2], out int toFile)
+                && Interpreter.TryParseRow(s[3], out int toRank))
+            {
+                move = new Move()
+                {
+                    fromRank = fromRank,
+                    fromFile = fromFile,
+                    toRank = toRank,
+                    toFile = toFile
+                };
+                return true;
+            }
+            return false;
+        }
+
+     
+
     }
     public struct Piece
     {

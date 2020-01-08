@@ -19,7 +19,7 @@ namespace Chess.Test
         [TestMethod]
         public void test2_timings()
         {
-            int maxDepth = 10;
+            int maxDepth = 7;
 
             var gameTree = new GameTree();
 
@@ -49,7 +49,7 @@ namespace Chess.Test
             //    results.Add($"depth:{depth}, count:{count}, time:{time}ms");
             //}
 
-            
+
             //for (int depth = 1; depth < maxDepth; depth++)
             //{
             //    var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -59,16 +59,19 @@ namespace Chess.Test
 
             //    results.Add($"depth:{depth}, value:{r.Value}, time:{time}ms");
             //}
+            
+            for (int depth = 1; depth < maxDepth; depth++)
+            {
 
-            //for (int depth = 1; depth < maxDepth; depth++)
-            //{
-            //    var sw = System.Diagnostics.Stopwatch.StartNew();
+                var initialState = StateFactory.GetDefaultStartingState();
+                var initialNode = new Node(initialState, new Move());
 
-            //    var r = gameTree.AlphaBetaRecursive(new Node(0), depth: depth-1, isMaximizingPlayer: true);
-            //    long time = sw.ElapsedMilliseconds;
+                var sw = System.Diagnostics.Stopwatch.StartNew();
 
-            //    results.Add($"depth:{depth}, value:{r}, time:{time}ms");
-            //}
+                var r = gameTree.AlphaBetaRecursive(initialNode, depth: depth-1, isMaximizingPlayer: true);
+                long time = sw.ElapsedMilliseconds;
+                results.Add($"depth:{depth}, value:{r}, time:{time}ms");
+            }
         }
 
       
@@ -78,11 +81,22 @@ namespace Chess.Test
         {
             var gameTree = new GameTree();
 
-            var initialState = StateFactory.GetStartingState();
+            var initialState = StateFactory.GetPawnStartingState(6, 6);
             var initialNode = new Node(initialState, new Move());
 
-            var result = gameTree.AlphaBetaRecursive(initialNode, depth: 7, isMaximizingPlayer: true);
+            var result = gameTree.AlphaBetaRecursive(initialNode, depth: 9, isMaximizingPlayer: true);
 
+            var nextState = new State(initialState);
+            nextState.MovePieceUnchecked(fromRank: 0, fromFile: 2, toRank: 1, toFile: 2);
+            var nextNode = new Node(nextState, new Move());
+
+            var result2 = gameTree.AlphaBetaRecursive(nextNode, depth: 9, isMaximizingPlayer: false);
+
+            nextState = new State(nextState);
+            nextState.MovePieceUnchecked(fromRank: 5, fromFile: 3, toRank: 3, toFile: 3);
+            nextNode = new Node(nextState, new Move());
+
+            var result3 = gameTree.AlphaBetaRecursive(nextNode, depth: 9, isMaximizingPlayer: true);
         }
     }
 }
