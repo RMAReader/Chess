@@ -35,7 +35,14 @@ namespace Chess.ConsoleUI
                 {
                     Console.Write("Make a move:");
                     var input = Console.ReadLine();
-                    if(Move.TryParse(input, out var move) 
+                    if(input.Length > 4 && input.Substring(0,5)=="query")
+                    {
+                        if(Position.TryParse(input.Substring(6, input.Length - 6), out Position p))
+                        {
+                            Console.WriteLine($"{state.Board[p.rank, p.file]}");
+                        }
+                    }
+                    else if (Move.TryParse(input, out var move) 
                         && state.IterateMoves(player).Any(x => x.Equals(move)))
                     {
                         state.MovePieceUnchecked(move);
@@ -53,7 +60,7 @@ namespace Chess.ConsoleUI
 
                     var node = new Node(state, new Move());
 
-                    var newNode = gameTree.AlphaBetaRecursive(node, 5, currentTurn == EnumPlayer.White);
+                    var newNode = gameTree.AlphaBetaRecursive(node, 6, currentTurn == EnumPlayer.White);
 
                     state = newNode.CurrentState;
 

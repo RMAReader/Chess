@@ -54,7 +54,7 @@ namespace Chess
             double result = 0;
 
             result += GetPieceValues(state);
-            result += GetBoardCoverage(state);
+            //result += GetBoardCoverage(state);
 
             return result;
         }

@@ -300,7 +300,7 @@ namespace Chess
                         result.Add(new Position { rank = rank, file = current.file });
 
                         var nextRank = rank + 1;
-                        if (nextRank < Ranks && Board[nextRank, current.file].Player == EnumPlayer.Undefined)
+                        if (nextRank == 3 && Board[nextRank, current.file].Player == EnumPlayer.Undefined)
                         {
                             result.Add(new Position { rank = nextRank, file = current.file });
                         }
@@ -329,7 +329,7 @@ namespace Chess
                         result.Add(new Position { rank = rank, file = current.file });
 
                         var nextrank = rank - 1;
-                        if (nextrank >= 0 && Board[nextrank, current.file].Player == EnumPlayer.Undefined)
+                        if (nextrank == 5 && Board[nextrank, current.file].Player == EnumPlayer.Undefined)
                         {
                             result.Add(new Position { rank = nextrank, file = current.file });
                         }
@@ -465,7 +465,26 @@ namespace Chess
         }
         public override string ToString()
         {
-            return $"({rank},{file})";
+            return $"{Interpreter.FileName(file)}" +
+                $"{Interpreter.RankName(rank)}";
+        }
+        public static bool TryParse(string s, out Position pos)
+        {
+            pos = new Position();
+
+            s = s.Trim();
+            if (s.Length == 2
+                && Interpreter.TryParseColumn(s[0], out int fromFile)
+                && Interpreter.TryParseRow(s[1], out int fromRank))
+            {
+                pos = new Position()
+                {
+                    rank = fromRank,
+                    file = fromFile,
+                };
+                return true;
+            }
+            return false;
         }
     }
     public struct Move
@@ -475,13 +494,11 @@ namespace Chess
         public int toRank;
         public int toFile;
 
-
-
         public override string ToString()
         {
-            return $"{Interpreter.FileName(fromFile)}," +
-                $"{Interpreter.RankName(fromRank)}," +
-                $"{Interpreter.FileName(toFile)}," +
+            return $"{Interpreter.FileName(fromFile)}" +
+                $"{Interpreter.RankName(fromRank)}" +
+                $"{Interpreter.FileName(toFile)}" +
                 $"{Interpreter.RankName(toRank)}";
         }
 
