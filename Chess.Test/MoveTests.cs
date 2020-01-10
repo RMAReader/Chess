@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Chess.Pieces;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +30,11 @@ namespace Chess.Test
             var moves = state.GetBishopMoveOptions(new Position(4, 4), EnumPlayer.White);
         }
 
-      
+        [TestMethod]
+        public void MoveLookup()
+        {
+            var board = new Board(8, 8);
+            var lookup = board.MoveLookup;
+        }
     }
 }
