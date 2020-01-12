@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Chess.Old;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -42,7 +43,7 @@ namespace Chess.ConsoleUI
                             Console.WriteLine($"{state.Board[p.rank, p.file]}");
                         }
                     }
-                    else if (Move.TryParse(input, out var move) 
+                    else if (Chess.Old.Move.TryParse(input, out var move) 
                         && state.IterateMoves(player).Any(x => x.Equals(move)))
                     {
                         state.MovePieceUnchecked(move);
@@ -58,7 +59,7 @@ namespace Chess.ConsoleUI
                 {
                     Console.Write("Computer to move.  Press 'f' to force early move:");
 
-                    var node = new Node(state, new Move());
+                    var node = new Node(state, new Chess.Old.Move());
 
                     var newNode = gameTree.AlphaBetaRecursive(node, 6, currentTurn == EnumPlayer.White);
 

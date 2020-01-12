@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Chess.Old;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,7 +65,7 @@ namespace Chess.Test
             {
 
                 var initialState = StateFactory.GetDefaultStartingState();
-                var initialNode = new Node(initialState, new Move());
+                var initialNode = new Node(initialState, new Chess.Old.Move());
 
                 var sw = System.Diagnostics.Stopwatch.StartNew();
 
@@ -82,19 +83,19 @@ namespace Chess.Test
             var gameTree = new GameTree();
 
             var initialState = StateFactory.GetPawnStartingState(6, 6);
-            var initialNode = new Node(initialState, new Move());
+            var initialNode = new Node(initialState, new Chess.Old.Move());
 
             var result = gameTree.AlphaBetaRecursive(initialNode, depth: 9, isMaximizingPlayer: true);
 
             var nextState = new State(initialState);
             nextState.MovePieceUnchecked(fromRank: 0, fromFile: 2, toRank: 1, toFile: 2);
-            var nextNode = new Node(nextState, new Move());
+            var nextNode = new Node(nextState, new Chess.Old.Move());
 
             var result2 = gameTree.AlphaBetaRecursive(nextNode, depth: 9, isMaximizingPlayer: false);
 
             nextState = new State(nextState);
             nextState.MovePieceUnchecked(fromRank: 5, fromFile: 3, toRank: 3, toFile: 3);
-            nextNode = new Node(nextState, new Move());
+            nextNode = new Node(nextState, new Chess.Old.Move());
 
             var result3 = gameTree.AlphaBetaRecursive(nextNode, depth: 9, isMaximizingPlayer: true);
         }
