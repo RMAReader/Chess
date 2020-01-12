@@ -28,7 +28,7 @@ namespace Chess.ConsoleUI
             var inProgress = true;
             var currentTurn = EnumPlayer.White;
             var state = StateFactory.GetDefaultStartingState();
-            var gameTree = new GameTree();
+            var gameTree = new GameTreeOld();
 
             while (inProgress)
             {

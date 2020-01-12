@@ -22,7 +22,7 @@ namespace Chess.Test
         {
             int maxDepth = 7;
 
-            var gameTree = new GameTree();
+            var gameTree = new GameTreeOld();
 
             var results = new List<string>();
 
@@ -80,7 +80,7 @@ namespace Chess.Test
         [TestMethod]
         public void test3_alphabetaRecursive()
         {
-            var gameTree = new GameTree();
+            var gameTree = new GameTreeOld();
 
             var initialState = StateFactory.GetPawnStartingState(6, 6);
             var initialNode = new Node(initialState, new Chess.Old.Move());

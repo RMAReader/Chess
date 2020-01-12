@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Chess.Test
@@ -101,6 +102,26 @@ namespace Chess.Test
             var bishopMoves = board.GetMovesForPiece(0, 2);
             var queenMoves = board.GetMovesForPiece(0, 3);
             var kingMoves = board.GetMovesForPiece(0, 4);
+        }
+
+
+        [TestMethod]
+        public void GameTreeTest()
+        {
+            var gameTree = new GameTree();
+
+            var board = Board.Factory.GetDefault();
+
+            var moves = gameTree.AlphaBetaRecursive(board, 6, true);
+            var board2 = board.MakeMove(moves.First());
+
+            var moves2 = gameTree.AlphaBetaRecursive(board2, 6, false);
+            var board3 = board.MakeMove(moves2.First());
+
+            var moves3 = gameTree.AlphaBetaRecursive(board3, 6, false);
+            var board4 = board.MakeMove(moves3.First());
+
+
         }
     }
 }

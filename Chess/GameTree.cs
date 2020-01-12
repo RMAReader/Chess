@@ -98,7 +98,7 @@ namespace Chess.Old
 
 
 
-    public class GameTree
+    public class GameTreeOld
     {
        
         public Node AlphaBetaRecursive(Node node, int depth, bool isMaximizingPlayer)
@@ -122,14 +122,14 @@ namespace Chess.Old
                 return options.OrderBy(x => x.Value).First();
         }
 
-        private double AlphaBetaRecursive(Node node, int depth, double alpha, double beta, bool isMaximizingPlayer)
+        private double AlphaBetaRecursive(Node node, int depth, double alpha, double beta, bool isWhite)
         {
             if(depth == 0)
             {
                 return node.CalculateHeuristicValue();
             }
 
-            if(isMaximizingPlayer)
+            if(isWhite)
             {
                 double value = double.NegativeInfinity;
                 node.CreateChildren(EnumPlayer.White);
@@ -164,6 +164,7 @@ namespace Chess.Old
         }
 
     }
-    
+
+
 
 }
