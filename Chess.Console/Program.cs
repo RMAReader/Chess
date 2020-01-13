@@ -13,26 +13,26 @@ namespace Chess.ConsoleUI
         {
             Console.WriteLine("Welcome to Chess Console!");
 
-            var player = EnumPlayer.Undefined;
+            //var player = EnumPlayer.Undefined;
 
-            ConsoleKeyInfo keyInfo = new ConsoleKeyInfo();
-            do
-            {
-                Console.Write("Please choose player (w/b):");
-                keyInfo = Console.ReadKey();
-                Console.Write(Environment.NewLine);
-                if (keyInfo.Key == ConsoleKey.W) player = EnumPlayer.White;
-                if (keyInfo.Key == ConsoleKey.B) player = EnumPlayer.Black;
-            } while (player == EnumPlayer.Undefined);
+            //ConsoleKeyInfo keyInfo = new ConsoleKeyInfo();
+            //do
+            //{
+            //    Console.Write("Please choose player (w/b):");
+            //    keyInfo = Console.ReadKey();
+            //    Console.Write(Environment.NewLine);
+            //    if (keyInfo.Key == ConsoleKey.W) player = EnumPlayer.White;
+            //    if (keyInfo.Key == ConsoleKey.B) player = EnumPlayer.Black;
+            //} while (player == EnumPlayer.Undefined);
 
             var inProgress = true;
-            var currentTurn = EnumPlayer.White;
-            var state = StateFactory.GetDefaultStartingState();
-            var gameTree = new GameTreeOld();
+            bool isWhiteTurn = true;
+            var board = Board.Factory.GetDefault();
+            var gameTree = new GameTree();
 
             while (inProgress)
             {
-                if(player==currentTurn)
+                if(isWhiteTurn)
                 {
                     Console.Write("Make a move:");
                     var input = Console.ReadLine();
@@ -40,15 +40,17 @@ namespace Chess.ConsoleUI
                     {
                         if(Position.TryParse(input.Substring(6, input.Length - 6), out Position p))
                         {
-                            Console.WriteLine($"{state.Board[p.rank, p.file]}");
+                            Console.WriteLine($"{board.GetBoardSquare(p.rank, p.file)}");
                         }
                     }
                     else if (Chess.Old.Move.TryParse(input, out var move) 
-                        && state.IterateMoves(player).Any(x => x.Equals(move)))
+                        && board.GetMovesForPiece(move.fromRank, move.fromFile).Any(x => x.ToIndex == board.GetBoardIndex(move.toRank, move.toFile)))
                     {
-                        state.MovePieceUnchecked(move);
+                        var newMove = board.GetMovesForPiece(move.fromRank, move.fromFile).First(x => x.ToIndex == board.GetBoardIndex(move.toRank, move.toFile));
 
-                        currentTurn = (currentTurn == EnumPlayer.White) ? EnumPlayer.Black : EnumPlayer.White;
+                        board = board.MakeMove(newMove);
+
+                        isWhiteTurn = false;
                     }
                     else
                     {
@@ -59,15 +61,18 @@ namespace Chess.ConsoleUI
                 {
                     Console.Write("Computer to move.  Press 'f' to force early move:");
 
-                    var node = new Node(state, new Chess.Old.Move());
+                    var moves = gameTree.AlphaBetaRecursive(board, 4, isWhiteTurn);
+                    var move = moves.First();
+                    board = board.MakeMove(move);
 
-                    var newNode = gameTree.AlphaBetaRecursive(node, 6, currentTurn == EnumPlayer.White);
+                    string moveStr = $"{Interpreter.FileName(board.File(move.FromIndex))}" +
+                        $"{Interpreter.RankName(board.Rank(move.FromIndex))}" +
+                        $"{Interpreter.FileName(board.File(move.ToIndex))}" +
+                        $"{Interpreter.RankName(board.Rank(move.ToIndex))}";
 
-                    state = newNode.CurrentState;
+                    Console.Write($"{moveStr}  {move.ToString()}{Environment.NewLine}");
 
-                    Console.Write($"{newNode.LastMove.ToString()}{Environment.NewLine}");
-
-                    currentTurn = (currentTurn == EnumPlayer.White) ? EnumPlayer.Black : EnumPlayer.White;
+                    isWhiteTurn = true;
                 }
             }
 

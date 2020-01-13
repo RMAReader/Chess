@@ -19,7 +19,7 @@ namespace Chess
         Queen = 20,
         King = 24,
         Piece = 28,
-        MovedOnce = 32,
+        NotMoved = 32,
         MovedMoreThanOnce = 64
     }
 

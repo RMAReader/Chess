@@ -118,7 +118,7 @@ namespace Chess.Test
             var moves2 = gameTree.AlphaBetaRecursive(board2, 6, false);
             var board3 = board.MakeMove(moves2.First());
 
-            var moves3 = gameTree.AlphaBetaRecursive(board3, 6, false);
+            var moves3 = gameTree.AlphaBetaRecursive(board3, 6, true);
             var board4 = board.MakeMove(moves3.First());
 
 
