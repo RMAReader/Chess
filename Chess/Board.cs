@@ -22,7 +22,7 @@ namespace Chess
     
         private void CreatePieceValues()
         {
-            PieceSquareValue = new float[(byte)(EnumBoardSquare.Black | EnumBoardSquare.King) + 1][];
+            PieceSquareValue = new float[256][];
 
             PieceSquareValue[(byte)(EnumBoardSquare.Empty)] = new float[_board.Size];
 
@@ -63,8 +63,16 @@ namespace Chess
                     PieceSquareValue[(byte)(EnumBoardSquare.Black | EnumBoardSquare.King)][pos] = -WhitePieceSquareValueConstants.King[i, j] - PieceValueCOnstants.King;
                 }
             }
-        }
 
+            for(int i=0; i < PieceSquareValue.Length; i++)
+            {
+                if(PieceSquareValue[i] != null)
+                {
+                    var notMovedEnum = ((EnumBoardSquare)i) | EnumBoardSquare.NotMoved;
+                    PieceSquareValue[(byte)notMovedEnum] = PieceSquareValue[i];
+                }
+            }
+        }
     }
 
     public class MoveLookup
@@ -365,9 +373,15 @@ namespace Chess
 
             Array.Copy(_squares, result._squares, _squares.Length);
 
-            result._squares[move.ToIndex] = move.PieceMoved;
+            result._squares[move.ToIndex] = result._squares[move.FromIndex] & (~EnumBoardSquare.NotMoved);
             result._squares[move.FromIndex] = EnumBoardSquare.Empty;
             result._score = _score + move.ScoreChange;
+
+            if(move.ToIndex2 != move.FromIndex2)
+            {
+                result._squares[move.ToIndex2] = result._squares[move.FromIndex2] & (~EnumBoardSquare.NotMoved);
+                result._squares[move.FromIndex2] = EnumBoardSquare.Empty;
+            }
 
             return result;
         }
@@ -398,57 +412,64 @@ namespace Chess
 
         private void GetMovesFromSquare(byte i, List<Move> moves)
         {
-            switch (_squares[i])
+            switch (_squares[i] & (~EnumBoardSquare.NotMoved))
             {
                 case EnumBoardSquare.Empty:
                     break;
 
                 case EnumBoardSquare.Pawn | EnumBoardSquare.White:
+                //case EnumBoardSquare.Pawn | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
                     AddWhitePawnMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Pawn | EnumBoardSquare.Black:
+                //case EnumBoardSquare.Pawn | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
                     AddBlackPawnMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Knight | EnumBoardSquare.White:
                 case EnumBoardSquare.Knight | EnumBoardSquare.Black:
-                case EnumBoardSquare.Knight | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                case EnumBoardSquare.Knight | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                //case EnumBoardSquare.Knight | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                //case EnumBoardSquare.Knight | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddKnightMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Bishop | EnumBoardSquare.White:
                 case EnumBoardSquare.Bishop | EnumBoardSquare.Black:
-                case EnumBoardSquare.Bishop | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                case EnumBoardSquare.Bishop | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+               // case EnumBoardSquare.Bishop | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+               // case EnumBoardSquare.Bishop | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddBishopMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Rook | EnumBoardSquare.White:
                 case EnumBoardSquare.Rook | EnumBoardSquare.Black:
-                case EnumBoardSquare.Rook | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                case EnumBoardSquare.Rook | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                //case EnumBoardSquare.Rook | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                //case EnumBoardSquare.Rook | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddRookMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Queen | EnumBoardSquare.White:
                 case EnumBoardSquare.Queen | EnumBoardSquare.Black:
-                case EnumBoardSquare.Queen | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                case EnumBoardSquare.Queen | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                //case EnumBoardSquare.Queen | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                //case EnumBoardSquare.Queen | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddQueenMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.King | EnumBoardSquare.White:
                 case EnumBoardSquare.King | EnumBoardSquare.Black:
-                case EnumBoardSquare.King | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                case EnumBoardSquare.King | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+
+                //    AddKingMoves(i, moves);
+                //    break;
+
+                //case EnumBoardSquare.King | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                //case EnumBoardSquare.King | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddKingMoves(i, moves);
+                    AddKingCastling(i, moves);
                     break;
 
                 default:
@@ -518,6 +539,20 @@ namespace Chess
             }
         }
 
+        private void AddKingCastling(byte i, List<Move> moves)
+        {
+            if(HasNotMoved(_squares[i]) && IsEmpty(_squares[i - 1]) && IsEmpty(_squares[i - 2]) && IsEmpty(_squares[i - 3]) && HasNotMoved(_squares[i - 4]))
+            {
+                float scoreChange = GetValueChange(i, (byte)(i - 2)) + GetValueChange((byte)(i - 4), (byte)(i - 1));
+                moves.Add(new Move(_squares[i], _squares[i - 2], i, (byte)(i - 2), (byte)(i-4), (byte)(i - 1), scoreChange));
+            }
+            if (HasNotMoved(_squares[i]) && IsEmpty(_squares[i + 1]) && IsEmpty(_squares[i + 2]) && HasNotMoved(_squares[i + 3]))
+            {
+                float scoreChange = GetValueChange(i, (byte)(i + 2)) + GetValueChange((byte)(i + 3), (byte)(i + 1));
+                moves.Add(new Move(_squares[i], _squares[i + 2], i, (byte)(i + 2), (byte)(i + 3), (byte)(i + 1), scoreChange));
+            }
+        }
+
         private void AddBishopMoves(byte i, List<Move> moves)
         {
             AddStraightPath(i, _moveLookup.NorthWest[i], moves);
@@ -578,6 +613,10 @@ namespace Chess
         {
             return ((me | square2) & (EnumBoardSquare.White | EnumBoardSquare.Black)) == (EnumBoardSquare.White | EnumBoardSquare.Black);
         }
+        private bool HasNotMoved(EnumBoardSquare piece)
+        {
+            return (piece & EnumBoardSquare.NotMoved) == EnumBoardSquare.NotMoved;
+        }
 
         private float GetValueChange(byte from, byte to)
         {
@@ -599,6 +638,8 @@ namespace Chess
         public EnumBoardSquare PieceCaptured;
         public byte FromIndex;
         public byte ToIndex;
+        public byte FromIndex2;
+        public byte ToIndex2;
         public float ScoreChange;
 
         public Move(EnumBoardSquare pieceMoved, EnumBoardSquare pieceCaptured, byte fromIndex, byte toIndex, float scoreChange)
@@ -607,6 +648,19 @@ namespace Chess
             PieceCaptured = pieceCaptured;
             FromIndex = fromIndex;
             ToIndex = toIndex;
+            FromIndex2 = 0;
+            ToIndex2 = 0;
+            ScoreChange = scoreChange;
+        }
+
+        public Move(EnumBoardSquare pieceMoved, EnumBoardSquare pieceCaptured, byte fromIndex, byte toIndex, byte fromIndex2, byte toIndex2,  float scoreChange)
+        {
+            PieceMoved = pieceMoved;
+            PieceCaptured = pieceCaptured;
+            FromIndex = fromIndex;
+            ToIndex = toIndex;
+            FromIndex2 = fromIndex2;
+            ToIndex2 = toIndex2;
             ScoreChange = scoreChange;
         }
 
@@ -627,10 +681,10 @@ namespace Chess
             AddBlackPieces(result);
 
             for (int i = 0; i < 8; i++)
-                result.PlacePiece(1, i, EnumBoardSquare.White | EnumBoardSquare.Pawn);
+                result.PlacePiece(1, i, EnumBoardSquare.White | EnumBoardSquare.Pawn | EnumBoardSquare.NotMoved);
 
             for (int i = 0; i < 8; i++)
-                result.PlacePiece(6, i, EnumBoardSquare.Black | EnumBoardSquare.Pawn);
+                result.PlacePiece(6, i, EnumBoardSquare.Black | EnumBoardSquare.Pawn | EnumBoardSquare.NotMoved);
 
             return result;
         }
@@ -650,28 +704,28 @@ namespace Chess
             if (result.Cols != 8)
                 throw new Exception();
 
-            result.PlacePiece(0, 0, EnumBoardSquare.White | EnumBoardSquare.Rook);
-            result.PlacePiece(0, 1, EnumBoardSquare.White | EnumBoardSquare.Knight);
-            result.PlacePiece(0, 2, EnumBoardSquare.White | EnumBoardSquare.Bishop);
-            result.PlacePiece(0, 3, EnumBoardSquare.White | EnumBoardSquare.Queen);
-            result.PlacePiece(0, 4, EnumBoardSquare.White | EnumBoardSquare.King);
-            result.PlacePiece(0, 5, EnumBoardSquare.White | EnumBoardSquare.Bishop);
-            result.PlacePiece(0, 6, EnumBoardSquare.White | EnumBoardSquare.Knight);
-            result.PlacePiece(0, 7, EnumBoardSquare.White | EnumBoardSquare.Rook);
+            result.PlacePiece(0, 0, EnumBoardSquare.White | EnumBoardSquare.Rook | EnumBoardSquare.NotMoved);
+            result.PlacePiece(0, 1, EnumBoardSquare.White | EnumBoardSquare.Knight | EnumBoardSquare.NotMoved);
+            result.PlacePiece(0, 2, EnumBoardSquare.White | EnumBoardSquare.Bishop | EnumBoardSquare.NotMoved);
+            result.PlacePiece(0, 3, EnumBoardSquare.White | EnumBoardSquare.Queen | EnumBoardSquare.NotMoved);
+            result.PlacePiece(0, 4, EnumBoardSquare.White | EnumBoardSquare.King | EnumBoardSquare.NotMoved);
+            result.PlacePiece(0, 5, EnumBoardSquare.White | EnumBoardSquare.Bishop | EnumBoardSquare.NotMoved);
+            result.PlacePiece(0, 6, EnumBoardSquare.White | EnumBoardSquare.Knight | EnumBoardSquare.NotMoved);
+            result.PlacePiece(0, 7, EnumBoardSquare.White | EnumBoardSquare.Rook | EnumBoardSquare.NotMoved);
         }
         private void AddBlackPieces(Board result)
         {
             if (result.Cols != 8)
                 throw new Exception();
 
-            result.PlacePiece(7, 0, EnumBoardSquare.Black | EnumBoardSquare.Rook);
-            result.PlacePiece(7, 1, EnumBoardSquare.Black | EnumBoardSquare.Knight);
-            result.PlacePiece(7, 2, EnumBoardSquare.Black | EnumBoardSquare.Bishop);
-            result.PlacePiece(7, 3, EnumBoardSquare.Black | EnumBoardSquare.Queen);
-            result.PlacePiece(7, 4, EnumBoardSquare.Black | EnumBoardSquare.King);
-            result.PlacePiece(7, 5, EnumBoardSquare.Black | EnumBoardSquare.Bishop);
-            result.PlacePiece(7, 6, EnumBoardSquare.Black | EnumBoardSquare.Knight);
-            result.PlacePiece(7, 7, EnumBoardSquare.Black | EnumBoardSquare.Rook);
+            result.PlacePiece(7, 0, EnumBoardSquare.Black | EnumBoardSquare.Rook | EnumBoardSquare.NotMoved);
+            result.PlacePiece(7, 1, EnumBoardSquare.Black | EnumBoardSquare.Knight | EnumBoardSquare.NotMoved);
+            result.PlacePiece(7, 2, EnumBoardSquare.Black | EnumBoardSquare.Bishop | EnumBoardSquare.NotMoved);
+            result.PlacePiece(7, 3, EnumBoardSquare.Black | EnumBoardSquare.Queen | EnumBoardSquare.NotMoved);
+            result.PlacePiece(7, 4, EnumBoardSquare.Black | EnumBoardSquare.King | EnumBoardSquare.NotMoved);
+            result.PlacePiece(7, 5, EnumBoardSquare.Black | EnumBoardSquare.Bishop | EnumBoardSquare.NotMoved);
+            result.PlacePiece(7, 6, EnumBoardSquare.Black | EnumBoardSquare.Knight | EnumBoardSquare.NotMoved);
+            result.PlacePiece(7, 7, EnumBoardSquare.Black | EnumBoardSquare.Rook | EnumBoardSquare.NotMoved);
         }
     }
 
@@ -785,6 +839,32 @@ namespace Chess
                 arr[j] = temp;
             }
             return arr;
+        }
+
+    }
+
+
+    public class FixedSizeSortedCollection<TItem>
+    {
+        private SortedList<float, TItem> _data;
+        private int _sizeLimit;
+
+        public FixedSizeSortedCollection(int sizeLimit)
+        {
+            _sizeLimit = sizeLimit;
+        }
+
+        public void Add(float value, TItem item)
+        {
+            if(_data.Count < _sizeLimit)
+            {
+                _data.Add(value, item);
+            }
+            else if(value > _data.Keys[0])
+            {
+                _data.RemoveAt(0);
+                _data.Add(value, item);
+            }
         }
 
     }
