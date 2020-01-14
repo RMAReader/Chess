@@ -373,7 +373,7 @@ namespace Chess
 
             Array.Copy(_squares, result._squares, _squares.Length);
 
-            result._squares[move.ToIndex] = result._squares[move.FromIndex] & (~EnumBoardSquare.NotMoved);
+            result._squares[move.ToIndex] = move.PieceMoved & (~EnumBoardSquare.NotMoved);
             result._squares[move.FromIndex] = EnumBoardSquare.Empty;
             result._score = _score + move.ScoreChange;
 
@@ -484,7 +484,17 @@ namespace Chess
             {
                 if (IsEmpty(_squares[options[j]]))
                 {
-                    moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    if (Rank(options[j]) < Rows - 1)
+                    {
+                        moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    }
+                    else
+                    {
+                        moves.Add(new Move(EnumBoardSquare.Queen | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Queen | EnumBoardSquare.White)));
+                        moves.Add(new Move(EnumBoardSquare.Rook | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Rook | EnumBoardSquare.White)));
+                        moves.Add(new Move(EnumBoardSquare.Bishop | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Bishop | EnumBoardSquare.White)));
+                        moves.Add(new Move(EnumBoardSquare.Knight | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Knight | EnumBoardSquare.White)));
+                    }
                 }
             }
             options = _moveLookup.WhitePawnCapture[i];
@@ -492,7 +502,17 @@ namespace Chess
             {
                 if (IsOpponent(_squares[i], _squares[options[j]]))
                 {
-                    moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    if (Rank(options[j]) < Rows - 1)
+                    {
+                        moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    }
+                    else
+                    {
+                        moves.Add(new Move(EnumBoardSquare.Queen | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Queen | EnumBoardSquare.White)));
+                        moves.Add(new Move(EnumBoardSquare.Rook | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Rook | EnumBoardSquare.White)));
+                        moves.Add(new Move(EnumBoardSquare.Bishop | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Bishop | EnumBoardSquare.White)));
+                        moves.Add(new Move(EnumBoardSquare.Knight | EnumBoardSquare.White, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Knight | EnumBoardSquare.White)));
+                    }
                 }
             }
         }
@@ -504,7 +524,17 @@ namespace Chess
             {
                 if (IsEmpty(_squares[options[j]]))
                 {
-                    moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    if (Rank(options[j]) > 0)
+                    {
+                        moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    }
+                    else
+                    {
+                        moves.Add(new Move(EnumBoardSquare.Queen | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Queen | EnumBoardSquare.Black)));
+                        moves.Add(new Move(EnumBoardSquare.Rook | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Rook | EnumBoardSquare.Black)));
+                        moves.Add(new Move(EnumBoardSquare.Bishop | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Bishop | EnumBoardSquare.Black)));
+                        moves.Add(new Move(EnumBoardSquare.Knight | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Knight | EnumBoardSquare.Black)));
+                    }
                 }
             }
             options = _moveLookup.BlackPawnCapture[i];
@@ -512,7 +542,17 @@ namespace Chess
             {
                 if (IsOpponent(_squares[i], _squares[options[j]]))
                 {
-                    moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    if (Rank(options[j]) > 0)
+                    {
+                        moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
+                    }
+                    else
+                    {
+                        moves.Add(new Move(EnumBoardSquare.Queen | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Queen | EnumBoardSquare.Black)));
+                        moves.Add(new Move(EnumBoardSquare.Rook | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Rook | EnumBoardSquare.Black)));
+                        moves.Add(new Move(EnumBoardSquare.Bishop | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Bishop | EnumBoardSquare.Black)));
+                        moves.Add(new Move(EnumBoardSquare.Knight | EnumBoardSquare.Black, _squares[options[j]], i, options[j], GetValueChange(i, options[j], EnumBoardSquare.Knight | EnumBoardSquare.Black)));
+                    }
                 }
             }
         }
@@ -624,6 +664,16 @@ namespace Chess
             var toType = (int)_squares[to];
 
             return _scoreLookup.PieceSquareValue[fromType][to]
+                - _scoreLookup.PieceSquareValue[fromType][from]
+                - _scoreLookup.PieceSquareValue[toType][to];
+        }
+        private float GetValueChange(byte from, byte to, EnumBoardSquare newPiece)
+        {
+            var fromType = (int)_squares[from];
+            var newPieceType = (int)newPiece;
+            var toType = (int)_squares[to];
+
+            return _scoreLookup.PieceSquareValue[newPieceType][to]
                 - _scoreLookup.PieceSquareValue[fromType][from]
                 - _scoreLookup.PieceSquareValue[toType][to];
         }
