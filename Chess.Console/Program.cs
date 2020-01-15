@@ -61,7 +61,7 @@ namespace Chess.ConsoleUI
                 {
                     Console.Write("Computer to move.  Press 'f' to force early move:");
 
-                    var moves = gameTree.AlphaBetaRecursive(board, 8, isWhiteTurn);
+                    var moves = gameTree.AlphaBetaRecursive(board, 7, isWhiteTurn);
                     var move = moves.First();
                     board = board.MakeMove(move);
 

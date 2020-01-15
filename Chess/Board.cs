@@ -360,6 +360,16 @@ namespace Chess
             return 0 <= row && row < _rows && 0 <= col && col < _cols;
         }
 
+        public void RecalculateScore()
+        {
+            _score = 0;
+            for (int i=0; i<_squares.Length; i++)
+            {
+                var type = (int)_squares[i];
+                _score += _scoreLookup.PieceSquareValue[type][i];
+            }
+        }
+
         public void PlacePiece(int row, int col, EnumBoardSquare piece)
         {
             byte index = GetBoardIndex(row, col);
@@ -802,6 +812,8 @@ namespace Chess
             double alpha = double.NegativeInfinity;
             double beta = double.PositiveInfinity;
 
+            board.RecalculateScore();
+
             var moves = board.GetMovesForPlayer(isWhite ? EnumBoardSquare.White : EnumBoardSquare.Black);
 
             if (isWhite)
@@ -809,11 +821,22 @@ namespace Chess
             else
                 moves = moves.OrderBy(x => x.ScoreChange).ToArray();
 
-            foreach (var move in moves)
+            //foreach (var move in moves)
+            //{
+            //    var scoreChange = AlphaBetaRecursive(board, move, depth-1, alpha, beta, !isWhite);
+            //    result.Add(new Move(move.PieceMoved, move.PieceCaptured, move.FromIndex, move.ToIndex, scoreChange));
+            //}
+            object _lock = new object();
+            Parallel.ForEach(moves, (Move move) => 
             {
-                var scoreChange = AlphaBetaRecursive(board, move, depth-1, alpha, beta, !isWhite);
-                result.Add(new Move(move.PieceMoved, move.PieceCaptured, move.FromIndex, move.ToIndex, scoreChange));
-            }
+                var scoreChange = AlphaBetaRecursive(board, move, depth - 1, alpha, beta, !isWhite);
+
+                lock (_lock)
+                {
+                    result.Add(new Move(move.PieceMoved, move.PieceCaptured, move.FromIndex, move.ToIndex, scoreChange));
+                }
+            });
+
 
             _durationMilliseconds = sw.ElapsedMilliseconds;
 
