@@ -30,6 +30,8 @@ namespace Chess.ConsoleUI
             var board = Board.Factory.GetDefault();
             var gameTree = new GameTree();
 
+            var history = new List<Board>() { board };
+
             while (inProgress)
             {
                 if(isWhiteTurn)
@@ -50,6 +52,8 @@ namespace Chess.ConsoleUI
 
                         board = board.MakeMove(newMove);
 
+                        history.Add(board);
+
                         isWhiteTurn = false;
                     }
                     else
@@ -59,18 +63,20 @@ namespace Chess.ConsoleUI
                 }
                 else
                 {
-                    Console.Write("Computer to move.  Press 'f' to force early move:");
+                    Console.Write("Computer to move:");
 
-                    var moves = gameTree.AlphaBetaRecursive(board, 7, isWhiteTurn);
+                    var moves = gameTree.AlphaBetaRecursive(board, 6, isWhiteTurn);
                     var move = moves.First();
                     board = board.MakeMove(move);
+
+                    history.Add(board);
 
                     string moveStr = $"{Interpreter.FileName(board.File(move.FromIndex))}" +
                         $"{Interpreter.RankName(board.Rank(move.FromIndex))}" +
                         $"{Interpreter.FileName(board.File(move.ToIndex))}" +
                         $"{Interpreter.RankName(board.Rank(move.ToIndex))}";
 
-                    Console.Write($"{moveStr}  {move.ToString()}{Environment.NewLine}");
+                    Console.Write($"{moveStr}{Environment.NewLine}");
 
                     isWhiteTurn = true;
                 }

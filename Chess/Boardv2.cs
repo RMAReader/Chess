@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Chess
+namespace Chess.V2
 {
 
     public class ScoreLookup
@@ -19,7 +19,7 @@ namespace Chess
 
             CreatePieceValues();
         }
-    
+
         private void CreatePieceValues()
         {
             PieceSquareValue = new float[256][];
@@ -40,9 +40,9 @@ namespace Chess
             PieceSquareValue[(byte)(EnumBoardSquare.Black | EnumBoardSquare.Queen)] = new float[_board.Size];
             PieceSquareValue[(byte)(EnumBoardSquare.Black | EnumBoardSquare.King)] = new float[_board.Size];
 
-            for(int i=0; i < _board.Rows; i++)
+            for (int i = 0; i < _board.Rows; i++)
             {
-                for(int j=0; j < _board.Cols; j++)
+                for (int j = 0; j < _board.Cols; j++)
                 {
                     int pos = _board.GetBoardIndex(i, j);
 
@@ -64,9 +64,9 @@ namespace Chess
                 }
             }
 
-            for(int i=0; i < PieceSquareValue.Length; i++)
+            for (int i = 0; i < PieceSquareValue.Length; i++)
             {
-                if(PieceSquareValue[i] != null)
+                if (PieceSquareValue[i] != null)
                 {
                     var notMovedEnum = ((EnumBoardSquare)i) | EnumBoardSquare.NotMoved;
                     PieceSquareValue[(byte)notMovedEnum] = PieceSquareValue[i];
@@ -163,7 +163,7 @@ namespace Chess
         private void CreateKingPaths()
         {
             King = new byte[_board.Size][];
-        
+
             for (int i = 0; i < _board.Rows; i++)
             {
                 for (int j = 0; j < _board.Cols; j++)
@@ -171,9 +171,9 @@ namespace Chess
                     int pos = _board.GetBoardIndex(i, j);
                     List<byte> moves = new List<byte>();
 
-                    for(int m = i - 1; m <= i + 1; m++)
+                    for (int m = i - 1; m <= i + 1; m++)
                     {
-                        for(int n = j - 1; n <= j + 1; n++)
+                        for (int n = j - 1; n <= j + 1; n++)
                         {
                             if (_board.OnBoard(m, n) && _board.GetBoardIndex(m, n) != pos)
                                 moves.Add(_board.GetBoardIndex(m, n));
@@ -185,7 +185,7 @@ namespace Chess
         }
         private void CreateKnightPaths()
         {
-            Knight= new byte[_board.Size][];
+            Knight = new byte[_board.Size][];
 
             var offsets = new List<Tuple<int, int>>
                     {
@@ -206,7 +206,7 @@ namespace Chess
                     int pos = _board.GetBoardIndex(i, j);
                     var moves = new List<byte>();
 
-                    foreach(var offset in offsets)
+                    foreach (var offset in offsets)
                     {
                         int row = i + offset.Item1;
                         int col = j + offset.Item2;
@@ -214,7 +214,7 @@ namespace Chess
                         if (_board.OnBoard(row, col))
                             moves.Add(_board.GetBoardIndex(row, col));
                     }
-                   
+
                     Knight[pos] = moves.ToArray();
                 }
             }
@@ -281,7 +281,7 @@ namespace Chess
                     if (_board.OnBoard(i + 1, j))
                         moves.Add(_board.GetBoardIndex(i + 1, j));
 
-                    if(i == 1 && _board.OnBoard(i + 2, j))
+                    if (i == 1 && _board.OnBoard(i + 2, j))
                         moves.Add(_board.GetBoardIndex(i + 2, j));
 
                     WhitePawn[pos] = moves.ToArray();
@@ -323,7 +323,7 @@ namespace Chess
         /// </summary>
         private EnumBoardSquare[] _squares;
         private float _score;
-       
+
 
         public Board(byte rows, byte cols, MoveLookup moveLookup = null, ScoreLookup scoreLookup = null)
         {
@@ -363,7 +363,7 @@ namespace Chess
         public void RecalculateScore()
         {
             _score = 0;
-            for (int i=0; i<_squares.Length; i++)
+            for (int i = 0; i < _squares.Length; i++)
             {
                 var type = (int)_squares[i];
                 _score += _scoreLookup.PieceSquareValue[type][i];
@@ -387,7 +387,7 @@ namespace Chess
             result._squares[move.FromIndex] = EnumBoardSquare.Empty;
             result._score = _score + move.ScoreChange;
 
-            if(move.ToIndex2 != move.FromIndex2)
+            if (move.ToIndex2 != move.FromIndex2)
             {
                 result._squares[move.ToIndex2] = result._squares[move.FromIndex2] & (~EnumBoardSquare.NotMoved);
                 result._squares[move.FromIndex2] = EnumBoardSquare.Empty;
@@ -403,7 +403,7 @@ namespace Chess
             byte index = GetBoardIndex(row, col);
 
             GetMovesFromSquare(index, moves);
-            
+
             return moves.ToArray();
         }
 
@@ -413,7 +413,7 @@ namespace Chess
 
             for (byte i = 0; i < Size; i++)
             {
-                if((_squares[i] & player) == player)
+                if ((_squares[i] & player) == player)
                     GetMovesFromSquare(i, moves);
             }
 
@@ -428,43 +428,43 @@ namespace Chess
                     break;
 
                 case EnumBoardSquare.Pawn | EnumBoardSquare.White:
-                //case EnumBoardSquare.Pawn | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Pawn | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
                     AddWhitePawnMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Pawn | EnumBoardSquare.Black:
-                //case EnumBoardSquare.Pawn | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Pawn | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
                     AddBlackPawnMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Knight | EnumBoardSquare.White:
                 case EnumBoardSquare.Knight | EnumBoardSquare.Black:
-                //case EnumBoardSquare.Knight | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                //case EnumBoardSquare.Knight | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Knight | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Knight | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddKnightMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Bishop | EnumBoardSquare.White:
                 case EnumBoardSquare.Bishop | EnumBoardSquare.Black:
-               // case EnumBoardSquare.Bishop | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-               // case EnumBoardSquare.Bishop | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                    // case EnumBoardSquare.Bishop | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                    // case EnumBoardSquare.Bishop | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddBishopMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Rook | EnumBoardSquare.White:
                 case EnumBoardSquare.Rook | EnumBoardSquare.Black:
-                //case EnumBoardSquare.Rook | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                //case EnumBoardSquare.Rook | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Rook | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Rook | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddRookMoves(i, moves);
                     break;
 
                 case EnumBoardSquare.Queen | EnumBoardSquare.White:
                 case EnumBoardSquare.Queen | EnumBoardSquare.Black:
-                //case EnumBoardSquare.Queen | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                //case EnumBoardSquare.Queen | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Queen | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.Queen | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddQueenMoves(i, moves);
                     break;
@@ -472,11 +472,11 @@ namespace Chess
                 case EnumBoardSquare.King | EnumBoardSquare.White:
                 case EnumBoardSquare.King | EnumBoardSquare.Black:
 
-                //    AddKingMoves(i, moves);
-                //    break;
+                    //    AddKingMoves(i, moves);
+                    //    break;
 
-                //case EnumBoardSquare.King | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
-                //case EnumBoardSquare.King | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.King | EnumBoardSquare.White | EnumBoardSquare.NotMoved:
+                    //case EnumBoardSquare.King | EnumBoardSquare.Black | EnumBoardSquare.NotMoved:
 
                     AddKingMoves(i, moves);
                     AddKingCastling(i, moves);
@@ -574,7 +574,7 @@ namespace Chess
             {
                 if (IsOpponentOrEmpty(_squares[i], _squares[options[j]]))
                     moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
-  
+
             }
         }
 
@@ -591,10 +591,10 @@ namespace Chess
 
         private void AddKingCastling(byte i, List<Move> moves)
         {
-            if(HasNotMoved(_squares[i]) && IsEmpty(_squares[i - 1]) && IsEmpty(_squares[i - 2]) && IsEmpty(_squares[i - 3]) && HasNotMoved(_squares[i - 4]))
+            if (HasNotMoved(_squares[i]) && IsEmpty(_squares[i - 1]) && IsEmpty(_squares[i - 2]) && IsEmpty(_squares[i - 3]) && HasNotMoved(_squares[i - 4]))
             {
                 float scoreChange = GetValueChange(i, (byte)(i - 2)) + GetValueChange((byte)(i - 4), (byte)(i - 1));
-                moves.Add(new Move(_squares[i], _squares[i - 2], i, (byte)(i - 2), (byte)(i-4), (byte)(i - 1), scoreChange));
+                moves.Add(new Move(_squares[i], _squares[i - 2], i, (byte)(i - 2), (byte)(i - 4), (byte)(i - 1), scoreChange));
             }
             if (HasNotMoved(_squares[i]) && IsEmpty(_squares[i + 1]) && IsEmpty(_squares[i + 2]) && HasNotMoved(_squares[i + 3]))
             {
@@ -639,7 +639,7 @@ namespace Chess
                 {
                     moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
                 }
-                else if(IsOpponentOrEmpty(_squares[i], _squares[options[j]]))
+                else if (IsOpponentOrEmpty(_squares[i], _squares[options[j]]))
                 {
                     moves.Add(new Move(_squares[i], _squares[options[j]], i, options[j], GetValueChange(i, options[j])));
                     break;
@@ -713,7 +713,7 @@ namespace Chess
             ScoreChange = scoreChange;
         }
 
-        public Move(EnumBoardSquare pieceMoved, EnumBoardSquare pieceCaptured, byte fromIndex, byte toIndex, byte fromIndex2, byte toIndex2,  float scoreChange)
+        public Move(EnumBoardSquare pieceMoved, EnumBoardSquare pieceCaptured, byte fromIndex, byte toIndex, byte fromIndex2, byte toIndex2, float scoreChange)
         {
             PieceMoved = pieceMoved;
             PieceCaptured = pieceCaptured;
@@ -823,11 +823,11 @@ namespace Chess
 
             //foreach (var move in moves)
             //{
-            //    var scoreChange = AlphaBetaRecursive(board, move, depth-1, alpha, beta, !isWhite);
+            //    var scoreChange = AlphaBetaRecursive(board, move, depth - 1, alpha, beta, !isWhite);
             //    result.Add(new Move(move.PieceMoved, move.PieceCaptured, move.FromIndex, move.ToIndex, scoreChange));
             //}
             object _lock = new object();
-            Parallel.ForEach(moves, (Move move) => 
+            Parallel.ForEach(moves, (Move move) =>
             {
                 var scoreChange = AlphaBetaRecursive(board, move, depth - 1, alpha, beta, !isWhite);
 
@@ -856,30 +856,25 @@ namespace Chess
 
             if (isWhite)
             {
-                float value = float.NegativeInfinity;
-
                 Board board = previousBoard.MakeMove(move);
 
                 var moves = board.GetMovesForPlayer(EnumBoardSquare.White);
                 Array.Sort(moves, (x, y) => y.ScoreChange.CompareTo(x.ScoreChange));
-                
-                for(int i=0; i < moves.Length; i++)
+
+                for (int i = 0; i < moves.Length; i++)
                 {
-                    value = Math.Max(value, AlphaBetaRecursive(board, moves[i], depth - 1, alpha, beta, false));
-                    alpha = Math.Max(alpha, value);
+                    alpha = Math.Max(alpha, AlphaBetaRecursive(board, moves[i], depth - 1, alpha, beta, false));
                     if (alpha >= beta)
                     {
                         _numberOfBranchesPruned++;
-                        break;
+                        return (float)beta;
                     }
                 }
 
-                return value;
+                return (float)alpha;
             }
             else
             {
-                float value = float.PositiveInfinity;
-
                 Board board = previousBoard.MakeMove(move);
 
                 var moves = board.GetMovesForPlayer(EnumBoardSquare.Black);
@@ -887,16 +882,15 @@ namespace Chess
 
                 for (int i = 0; i < moves.Length; i++)
                 {
-                    value = Math.Min(value, AlphaBetaRecursive(board, moves[i], depth - 1, alpha, beta, true));
-                    beta = Math.Min(beta, value);
+                    beta = Math.Min(beta, AlphaBetaRecursive(board, moves[i], depth - 1, alpha, beta, true));
                     if (alpha >= beta)
                     {
                         _numberOfBranchesPruned++;
-                        break;
+                        return (float)alpha;
                     }
                 }
 
-                return value;
+                return (float)beta;
             }
         }
 
@@ -929,11 +923,11 @@ namespace Chess
 
         public void Add(float value, TItem item)
         {
-            if(_data.Count < _sizeLimit)
+            if (_data.Count < _sizeLimit)
             {
                 _data.Add(value, item);
             }
-            else if(value > _data.Keys[0])
+            else if (value > _data.Keys[0])
             {
                 _data.RemoveAt(0);
                 _data.Add(value, item);

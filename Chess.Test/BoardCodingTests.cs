@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -120,6 +121,22 @@ namespace Chess.Test
 
             var moves3 = gameTree.AlphaBetaRecursive(board3, 6, true);
             var board4 = board.MakeMove(moves3.First());
+
+
+        }
+
+        [TestMethod]
+        public void PerformanceTests()
+        {
+            var gameTree = new GameTree();
+
+            var board = Board.Factory.GetDefault();
+
+            var sw = Stopwatch.StartNew();
+            var moves = gameTree.AlphaBetaRecursive(board, 6, true);
+            var t1 = sw.ElapsedMilliseconds;
+
+
 
 
         }
