@@ -30,7 +30,7 @@ namespace Chess
         public static float Bishop = 33;
         public static float Rook = 50;
         public static float Queen = 79;
-        public static float King = float.MaxValue;
+        public static float King = 10000;//float.MaxValue;
     }
 
     public static class WhitePieceSquareValueConstants

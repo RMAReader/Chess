@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Chess.V2
+namespace Chess.V3
 {
 
     public class ScoreLookup
@@ -365,7 +365,7 @@ namespace Chess.V2
         {
             _score = 0;
 
-            
+
             for (int i = 0; i < _squares.Length; i++)
             {
                 var type = (int)_squares[i];
@@ -733,7 +733,7 @@ namespace Chess.V2
         public override bool Equals(object obj)
         {
             var other = obj as Board;
-            if(other != null)
+            if (other != null)
             {
                 //return UnsafeCompare(_squares, other._squares);
                 for (int i = 0; i < _squares.Length; i++)
@@ -784,7 +784,7 @@ namespace Chess.V2
                     }
                     if ((l & 1) != 0)
                     {
-                        hash = (hash * HashingMultiplier) ^ (*((byte*)x1)); 
+                        hash = (hash * HashingMultiplier) ^ (*((byte*)x1));
                     }
                 }
                 return hash;
@@ -911,7 +911,7 @@ namespace Chess.V2
             result.Add(board.Score);
 
             var nextmove = NextMove;
-            while(nextmove != null)
+            while (nextmove != null)
             {
                 board = board.MakeMove(nextmove.Move);
                 board.RecalculateScore();
@@ -941,11 +941,6 @@ namespace Chess.V2
 
     }
 
-    public struct BoardStateInfo
-    {
-        public float Value;
-        public int SearchDepth;
-    }
 
     public class GameTree
     {
@@ -953,56 +948,8 @@ namespace Chess.V2
         public int _numberOfLeafEvaluations;
         public long _durationMilliseconds;
         public int _numberOfBranchesPruned;
-        object _lock = new object();
-        public Dictionary<int, BoardStateInfo> _boardStates = new Dictionary<int, BoardStateInfo>();
-        
-        public List<MoveSequence> AlphaBetaRecursive(Board board, int depth, bool isWhite)
-        {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
 
-            var result = new List<MoveSequence>();
-
-            _numberOfLeafEvaluations = 0;
-            _numberOfBranchesPruned = 0;
-
-            MoveSequence alpha = new MoveSequence { Value = float.NegativeInfinity };
-            MoveSequence beta = new MoveSequence { Value = float.PositiveInfinity }; 
-
-            board.RecalculateScore();
-
-            var moves = board.GetMovesForPlayer(isWhite ? EnumBoardSquare.White : EnumBoardSquare.Black);
-
-            if (isWhite)
-                moves = moves.OrderByDescending(x => x.ScoreChange).ToArray();
-            else
-                moves = moves.OrderBy(x => x.ScoreChange).ToArray();
-
-            foreach (var move in moves)
-            {
-                var scoreChange = AlphaBetaRecursive(board, move, depth - 1, alpha, beta, !isWhite);
-                result.Add(scoreChange);
-            }
-
-            //Parallel.ForEach(moves, (Move move) =>
-            //{
-            //    var scoreChange = AlphaBetaRecursive(board, move, depth - 1, alpha, beta, !isWhite);
-
-            //    lock (_lock)
-            //    {
-            //        result.Add(scoreChange);
-            //    }
-            //});
-
-
-            _durationMilliseconds = sw.ElapsedMilliseconds;
-
-            if (isWhite)
-                return Shuffle(result).OrderByDescending(x => x.Value).ToList();
-            else
-                return Shuffle(result).OrderBy(x => x.Value).ToList();
-        }
-
-        private MoveSequence AlphaBetaRecursive(Board previousBoard, Move move, int depth, MoveSequence alpha, MoveSequence beta, bool isWhite)
+        public MoveSequence GetMaximizingSequence(Board previousBoard, Move move, Board board, int depth, MoveSequence alpha, MoveSequence beta)
         {
             if (depth == 0 || (move.PieceCaptured & EnumBoardSquare.King) == EnumBoardSquare.King)
             {
@@ -1015,107 +962,71 @@ namespace Chess.V2
                 };
             }
 
-            if (isWhite)
+            if (board == null) board = previousBoard.MakeMove(move);
+
+            var moves = board.GetMovesForPlayer(EnumBoardSquare.White);
+            Array.Sort(moves, (x, y) => y.ScoreChange.CompareTo(x.ScoreChange));
+
+            for (int i = 0; i < moves.Length; i++)
             {
-                Board board = previousBoard.MakeMove(move);
-
-                var moves = board.GetMovesForPlayer(EnumBoardSquare.White);
-                Array.Sort(moves, (x, y) => y.ScoreChange.CompareTo(x.ScoreChange));
-
-                for (int i = 0; i < moves.Length; i++)
+                var moveSequence = GetMinimizingSequence(board, moves[i], null,  depth - 1, alpha, beta);
+                if (alpha.Value < moveSequence.Value)
                 {
-                    if (_boardStates.TryGetValue(board.GetHashCode(), out var info) && info.SearchDepth == depth)
+                    if (moveSequence.Value >= beta.Value)
                     {
-                        if (alpha.Value < info.Value)
-                        {
-                            if (info.Value >= beta.Value)
-                            {
-                                _numberOfBranchesPruned++;
-                                return beta;
-                            }
-                            else
-                            {
-                                alpha = new MoveSequence { Move = move, Value = info.Value, NextMove = null };
-                            }
-                        }
+                        _numberOfBranchesPruned++;
+                        return beta;
                     }
                     else
                     {
-                        var moveSequence = AlphaBetaRecursive(board, moves[i], depth - 1, alpha, beta, false);
-                        if (alpha.Value < moveSequence.Value)
-                        {
-                            if (moveSequence.Value >= beta.Value)
-                            {
-                                _numberOfBranchesPruned++;
-                                return beta;
-                            }
-                            else
-                            {
-                                alpha = new MoveSequence { Move = move, Value = moveSequence.Value, NextMove = moveSequence };
-                            }
-                        }
-                        lock (_lock)
-                        {
-                            if (!_boardStates.ContainsKey(board.GetHashCode()))
-                                _boardStates.Add(board.GetHashCode(), new BoardStateInfo { SearchDepth = depth, Value = moveSequence.Value });
-                        }
-                    }
-                   
-                }
-
-                return alpha;
-            }
-            else
-            {
-                Board board = previousBoard.MakeMove(move);
-
-                var moves = board.GetMovesForPlayer(EnumBoardSquare.Black);
-                Array.Sort(moves, (x, y) => x.ScoreChange.CompareTo(y.ScoreChange));
-
-                for (int i = 0; i < moves.Length; i++)
-                {
-                    if (_boardStates.TryGetValue(board.GetHashCode(), out var info) && info.SearchDepth == depth)
-                    {
-                        if (info.Value < beta.Value)
-                        {
-                            if (alpha.Value >= info.Value)
-                            {
-                                _numberOfBranchesPruned++;
-                                return alpha;
-                            }
-                            else
-                            {
-                                beta = new MoveSequence { Move = move, Value = info.Value, NextMove = null };
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var moveSequence = AlphaBetaRecursive(board, moves[i], depth - 1, alpha, beta, true);
-                        if (moveSequence.Value < beta.Value)
-                        {
-                            if (alpha.Value >= moveSequence.Value)
-                            {
-                                _numberOfBranchesPruned++;
-                                return alpha;
-                            }
-                            else
-                            {
-                                beta = new MoveSequence { Move = move, Value = moveSequence.Value, NextMove = moveSequence };
-                            }
-                        }
-
-                        lock (_lock)
-                        {
-                            if (!_boardStates.ContainsKey(board.GetHashCode()))
-                                _boardStates.Add(board.GetHashCode(), new BoardStateInfo { SearchDepth = moveSequence.Length, Value = moveSequence.Value });
-                        }
+                        alpha = new MoveSequence { Move = moveSequence.Move, Value = moveSequence.Value, NextMove = moveSequence };
                     }
                 }
-
-                return beta;
             }
+
+            return alpha;
         }
+
+
+        public MoveSequence GetMinimizingSequence(Board previousBoard, Move move, Board board,  int depth, MoveSequence alpha, MoveSequence beta)
+        {
+            if (depth == 0 || (move.PieceCaptured & EnumBoardSquare.King) == EnumBoardSquare.King)
+            {
+                _numberOfLeafEvaluations++;
+                return new MoveSequence
+                {
+                    Value = previousBoard.Score + move.ScoreChange,
+                    Move = move,
+                    NextMove = null
+                };
+            }
+
+            if(board == null) board = previousBoard.MakeMove(move);
+
+            var moves = board.GetMovesForPlayer(EnumBoardSquare.Black);
+            Array.Sort(moves, (x, y) => x.ScoreChange.CompareTo(y.ScoreChange));
+
+            for (int i = 0; i < moves.Length; i++)
+            {
+                var moveSequence = GetMaximizingSequence(board, moves[i], null,  depth - 1, alpha, beta);
+                if (moveSequence.Value < beta.Value)
+                {
+                    if (alpha.Value >= moveSequence.Value)
+                    {
+                        _numberOfBranchesPruned++;
+                        return alpha;
+                    }
+                    else
+                    {
+                        beta = new MoveSequence { Move = moveSequence.Move, Value = moveSequence.Value, NextMove = moveSequence };
+                    }
+                }
+            }
+
+            return beta;
+        }
+
+
 
         // A Function to generate a 
         // random permutation of arr[] 
